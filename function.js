@@ -39,7 +39,7 @@ async function handleRequest(request) {
       // Only cache successfully found responses from inDoors
       if (status === 200 && json.response.employers.length > 0 && company.startsWith("'") && company.endsWith("'")) {
         try {
-          GLASSDOOR.put(company, data, {expirationTtl: cacheDuration});
+          GLASSDOOR.put(company.toLowerCase(), data, {expirationTtl: cacheDuration});
         }
         catch(err) {
           // KV put limit exceeded for the day
