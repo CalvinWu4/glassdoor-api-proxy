@@ -14,7 +14,10 @@ async function handleRequest(request) {
     return new Response('Missing query parameters', { status: 400 });
   }
   else {
-    const cacheHit = await GLASSDOOR.get(company);
+    let cacheHit = await GLASSDOOR.get(company);
+    if (!cacheHit) { // Try lowercase
+      cacheHit = await GLASSDOOR.get(company.toLowerCase());
+    }
     const cacheDuration = 777600; // 9 days in seconds
 
     if (cacheHit && JSON.parse(cacheHit).status === 200) {
@@ -39,7 +42,7 @@ async function handleRequest(request) {
       // Only cache successfully found responses from inDoors
       if (status === 200 && json.response.employers.length > 0 && company.startsWith("'") && company.endsWith("'")) {
         try {
-          GLASSDOOR.put(company.toLowerCase(), data, {expirationTtl: cacheDuration});
+          GLASSDOOR.put(company.toLowerCase(), data, {expirationTtl: cacheDuration}); // Cache lowercase
         }
         catch(err) {
           // KV put limit exceeded for the day
