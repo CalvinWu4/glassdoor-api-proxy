@@ -21,7 +21,7 @@ async function handleRequest(request) {
     const cacheDuration = 777600; // 9 days in seconds
 
     if (cacheHit && JSON.parse(cacheHit).status === 200) {
-      const cacheResponse = new Response(cacheHit);
+      const cacheResponse = new Response(cacheHit, { headers: { 'content-type': 'application/json' } });
 
       return cacheResponse;
     }
@@ -48,8 +48,12 @@ async function handleRequest(request) {
           // KV put limit exceeded for the day
         }
       }
+      const init = {
+          headers: { 'content-type': 'application/json' },
+      }
 
-      return new Response(data);
+      return new Response(data, { headers: { 'content-type': 'application/json' } });
     }
   }
 }
+
