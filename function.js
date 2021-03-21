@@ -14,10 +14,7 @@ async function handleRequest(request) {
     return new Response('Missing query parameters', { status: 400 });
   }
   else {
-    let cacheHit = await GLASSDOOR.get(company);
-    if (!cacheHit) { // Try lowercase
-      cacheHit = await GLASSDOOR.get(company.toLowerCase());
-    }
+    let cacheHit = await GLASSDOOR.get(company.toLowerCase());
     const cacheDuration = 777600; // 9 days in seconds
 
     if (cacheHit && JSON.parse(cacheHit).status === 200) {
@@ -56,4 +53,3 @@ async function handleRequest(request) {
     }
   }
 }
-
