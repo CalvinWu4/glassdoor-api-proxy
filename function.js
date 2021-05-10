@@ -34,10 +34,12 @@ async function handleRequest(request) {
       };
       const status = response.status;
       const json = await response.clone().json();
+      const employers = json.response.employers;
       const data = JSON.stringify({headers: headers, status, json});
 
-      // Only cache successfully found responses from inDoors
-      if (status === 200 && json.response.employers.length > 0 && company.startsWith("'") && company.endsWith("'")) {
+      // Only cache successful responses that have at least one employer with 100+ ratings
+      if (status === 200 && employers.length > 0 && employers.some(employer => employer.numberOfRatings >= 100)
+        && company.startsWith("'") && company.endsWith("'")) {  // To make sure it comes from inDoors
         try {
           GLASSDOOR.put(company.toLowerCase(), data, {expirationTtl: cacheDuration}); // Cache lowercase
         }
