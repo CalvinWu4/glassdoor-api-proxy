@@ -15,7 +15,7 @@ async function handleRequest(request) {
   }
   else {
     let cacheHit = await GLASSDOOR.get(company.toLowerCase());
-    const cacheDuration = 777600; // 9 days in seconds
+    const cacheDuration = 2592000; // 30 days in seconds
 
     if (cacheHit && JSON.parse(cacheHit).status === 200) {
       const cacheResponse = new Response(cacheHit, { headers: { 'content-type': 'application/json' } });
@@ -26,7 +26,7 @@ async function handleRequest(request) {
       const url = `https://api.glassdoor.com/api/api.htm?v=1&format=json&t.p=${PARTNER_ID}&t.k=${PARTNER_KEY}&action=employers&q=${company}`;
       let response = await fetch(url);
       const currentDate = new Date();
-      const expireDate = new Date(currentDate.getTime() + cacheDuration * 1000);
+      const expireDate = new Date(currentDate.getTime() + cacheDuration);
       const headers = {
         'date': response.headers.get('date'),
         'expires': `${expireDate.toGMTString()}`,
@@ -37,9 +37,12 @@ async function handleRequest(request) {
       const employers = json.response.employers;
       const data = JSON.stringify({headers: headers, status, json});
 
-      // Only cache successful responses that have at least one employer with 500+ ratings
-      if (status === 200 && employers.length > 0 && employers.some(employer => employer.numberOfRatings >= 500)
-        && company.startsWith("'") && company.endsWith("'")) {  // To make sure it comes from inDoors
+      const regExp = /[a-zA-Z]/g;
+      if (status === 200 
+        && employers.length > 0 
+        && employers.some(employer => employer.numberOfRatings >= 1000) // Only cache if company has 1000+ ratings
+        && company.startsWith("'") && company.endsWith("'") // Make sure it comes from inDoors
+        && regExp.test(company.slice(1, -1))) {  // Make sure company contains letters
         try {
           GLASSDOOR.put(company.toLowerCase(), data, {expirationTtl: cacheDuration}); // Cache lowercase
         }
@@ -47,8 +50,8 @@ async function handleRequest(request) {
           // KV put limit exceeded for the day
         }
       }
-      const init = {
-          headers: { 'content-type': 'application/json' },
+      else {
+        console.log(response);
       }
 
       return new Response(data, { headers: { 'content-type': 'application/json' } });
